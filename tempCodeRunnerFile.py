@@ -1,7 +1,10 @@
-for i in range(K):
-#     mean_of_nodes = np.mean(nodes_of_centers[i], axis = 0)
-#     print(mean_of_nodes)
-#     k_means[i] = mean_of_nodes
-
-# initial_arrays()
-# allocate_centers()
+for i, node in enumerate(nodes):
+        min_dist = float('inf')
+        min_index = None
+        for j, center in enumerate(k_means):
+            distance = calculate_distance(node, center)
+            if distance < min_dist:
+                min_index = j
+                min_dist = distance
+        center_of_nodes[i] = min_index
+        nodes_of_centers[min_index].append(node)

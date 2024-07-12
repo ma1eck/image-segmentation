@@ -1,5 +1,4 @@
-K = 50
-
+K = 200
 
 
 
@@ -48,7 +47,7 @@ image = ResizeWithAspectRatio(image, width=380)
 
 
 def calculate_distance(v1, v2): # v1 = (x, y, r, b, g)
-    m  = 6
+    m  = 60
     pos1 = v1[:2]
     color1 = v1[2:]
     pos2 = v2[:2]
@@ -65,6 +64,9 @@ def calculate_distance(v1, v2): # v1 = (x, y, r, b, g)
 height, width, channels = image.shape
 nodes = np.empty((height * width, 5), dtype= np.uint32)
 
+N = height * width
+S = int((N/K) ** 0.5 + 1) * 2
+
 counter = 0
 for y in range(height):
     for x in range(width):
@@ -80,12 +82,47 @@ for i in range(K):
 def initial_center_of_nodes_and_nodes_of_centers():
     global center_of_nodes
     global nodes_of_centers
-    center_of_nodes = []
+    center_of_nodes = [-1] * height * width
     nodes_of_centers = []
     for i in range(K):
         nodes_of_centers.append([])
 
 def allocate_centers():
+
+    # distances = [float('inf')] * height * width
+    # for i, center in enumerate(k_means):
+    #     for x_offset in range (-S,S):
+    #         x = center[0]
+    #         new_x = x + x_offset
+    #         if (new_x < 0 or new_x >= width):
+    #             continue
+    #         for y_offset in range (-S,S):
+    #             y = center[1]    
+    #             new_y = y + y_offset
+    #             # print(new_x, new_y)
+    #             if ( new_y < 0 or new_y >= height):
+    #                 continue
+    #             pos = new_y *  width + new_x 
+    #             node = nodes[pos]
+    #             distance = calculate_distance(node, center)
+    #             if distance < distances[pos]:
+    #                 distances[pos] = distance
+    #                 # if center_of_nodes[pos] != -1:
+    #                 #     print(node)
+    #                 #     nodes_of_centers[ center_of_nodes[pos] ].remove(node)
+    #                 center_of_nodes[pos] = i
+    #                 # nodes_of_centers[i].append(node)
+    # # print(center_of_nodes)
+    # for pos, center_index in enumerate(center_of_nodes):
+    #     if center_index == -1:
+    #         continue
+    #     # print(center_index)
+    #     nodes_of_centers[center_index].append(nodes[pos])
+
+
+
+
+
     for i, node in enumerate(nodes):
         min_dist = float('inf')
         min_index = None
@@ -94,7 +131,7 @@ def allocate_centers():
             if distance < min_dist:
                 min_index = j
                 min_dist = distance
-        center_of_nodes.append(min_index)
+        center_of_nodes[i] = min_index
         nodes_of_centers[min_index].append(node)
 
 initial_center_of_nodes_and_nodes_of_centers()
@@ -103,10 +140,11 @@ allocate_centers()
 def update_k_means():
     global k_means, nodes_of_centers
     for i in range(K):
-        if len(nodes_of_centers[i]) != 0:
-            mean_of_nodes = np.mean(nodes_of_centers[i], axis = 0)
-            k_means[i] = mean_of_nodes
-for i in range(5):
+        nodes_of_centers[i].append(k_means[i])
+        mean_of_nodes = np.mean(nodes_of_centers[i], axis = 0)
+        k_means[i] = mean_of_nodes
+
+for i in range(10):
     update_k_means()
     initial_center_of_nodes_and_nodes_of_centers()
     allocate_centers()
