@@ -1,4 +1,4 @@
-K = 200
+K = 50
 
 
 
@@ -37,7 +37,7 @@ def ResizeWithAspectRatio(image, width=None, height=None, inter=cv2.INTER_AREA):
 
 
 image = cv2.imread('R.jpeg')
-image = ResizeWithAspectRatio(image, width=1280)
+image = ResizeWithAspectRatio(image, width=380)
 
 # to show image
 # cv2.imshow('image',image)
@@ -47,7 +47,7 @@ image = ResizeWithAspectRatio(image, width=1280)
 
 
 
-def distance(v1, v2): # v1 = (x, y, r, b, g)
+def calculate_distance(v1, v2): # v1 = (x, y, r, b, g)
     m  = 6
     pos1 = v1[:2]
     color1 = v1[2:]
@@ -55,11 +55,11 @@ def distance(v1, v2): # v1 = (x, y, r, b, g)
     color2 = v2[2:]
     pos_dist = np.linalg.norm(pos1 - pos2)
     color_dist = np.linalg.norm(color1 - color2)
-    dist = (color_dist ** 2) * m + pos_dist ** 2
-    dist = dist / (m+1)
-    dist = dist ** 0.5
+    distance = (color_dist ** 2) * m + pos_dist ** 2
+    distance = distance / (m+1)
+    distance = distance ** 0.5
 
-    return dist
+    return distance
 
 
 height, width, channels = image.shape
@@ -76,4 +76,58 @@ for y in range(height):
 k_means = np.empty([K, 5], dtype= np.uint32 )
 for i in range(K):
     k_means[i] =  np.random.randint(low = [0, 0, 0, 0, 0], high= [width, height, 256, 256 ,256], dtype=np.uint32)
-print(k_means)
+
+def initial_center_of_nodes_and_nodes_of_centers():
+    global center_of_nodes
+    global nodes_of_centers
+    center_of_nodes = []
+    nodes_of_centers = []
+    for i in range(K):
+        nodes_of_centers.append([])
+
+def allocate_centers():
+    for i, node in enumerate(nodes):
+        min_dist = float('inf')
+        min_index = None
+        for j, center in enumerate(k_means):
+            distance = calculate_distance(node, center)
+            if distance < min_dist:
+                min_index = j
+                min_dist = distance
+        center_of_nodes.append(min_index)
+        nodes_of_centers[min_index].append(node)
+
+initial_center_of_nodes_and_nodes_of_centers()
+allocate_centers()
+
+def update_k_means():
+    global k_means, nodes_of_centers
+    for i in range(K):
+        if len(nodes_of_centers[i]) != 0:
+            mean_of_nodes = np.mean(nodes_of_centers[i], axis = 0)
+            k_means[i] = mean_of_nodes
+for i in range(5):
+    update_k_means()
+    initial_center_of_nodes_and_nodes_of_centers()
+    allocate_centers()
+
+
+    
+
+
+
+
+
+
+new_image = np.zeros((height,width,3), np.uint8)
+
+for i, node in enumerate(nodes):
+    nearest_center = center_of_nodes[i]
+    rgb =  k_means[ nearest_center] [2:]
+    x = node[0]
+    y = node[1]
+    new_image[y][x] = rgb
+
+cv2.imshow('image',new_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
